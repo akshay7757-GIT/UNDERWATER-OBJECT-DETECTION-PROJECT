@@ -1,0 +1,86 @@
+#################Custom Trained YOLOV9 model Testing for Underwater Objects Detection ####################################
+import cv2
+import pandas as pd
+from ultralytics import YOLO
+import cvzone
+
+# Path to your best.pt model 
+model=YOLO('E:/Under_Water_Object_Detection/bestyolov9.pt')
+
+
+# Function to capture mouse coordinates (optional)
+def RGB(event, x, y, flags, param):
+    if event == cv2.EVENT_MOUSEMOVE:
+        colorsBGR = [x, y]
+        print(colorsBGR)
+
+cv2.namedWindow('RGB')
+cv2.setMouseCallback('RGB', RGB)  # Uncomment if using RGB function
+
+# Capture video or image
+cap = cv2.VideoCapture(0)  # For webcam
+#cap = cv2.VideoCapture('E:/Under_Water_Object_Detection/NEW_TRAINING/NEW_VIDEOS/NV5.mp4')  # For video
+
+# Read class names from file
+my_file = open("E:/Under_Water_Object_Detection/NEW_TRAINING/classes.txt", "r")
+data = my_file.read()
+class_list = data.split("\n")
+print(class_list)
+
+count = 0
+Object_Name=input("Enter the object name:")
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+   
+
+    # Resize frame (optional, adjust dimensions if needed)
+    frame = cv2.resize(frame, (840, 864))
+    
+    # Perform object detection with YOLO model
+    results = model.predict(frame)
+
+    # Handle cases where no objects are detected
+    if len(results) > 0:
+        result = results[0]  # Get the first detection
+
+        # Check if there are any bounding boxes before accessing them
+        if len(result.boxes) > 0:
+            box = result.boxes[0]  # Get the first bounding box
+
+            object_type = []
+            for box in result.boxes:
+                class_id = result.names[box.cls[0].item()]
+                object_type.append(class_id)
+
+            # Find class indices for detected objects
+            dd = [class_list.index(item) for item in object_type]
+
+            # Extract bounding box data
+            a = results[0].boxes.data.cpu().numpy()  # Convert to NumPy array
+            px = pd.DataFrame(a).astype("float")  # Create DataFrame
+
+            for index, row in px.iterrows():
+                x1, y1, x2, y2 = int(row[0]), int(row[1]), int(row[2]), int(row[3])
+                d = dd[index]  # Get class index for current bounding box
+                c = class_list[d]
+
+                # Draw bounding box and label on frame
+                if Object_Name==c:
+                    print("Matched object name")
+                    cvzone.putTextRect(frame,f'{c}',(x1,y1),1,1)
+                    cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,255),2)
+                
+
+            cv2.imshow("RGB", frame)
+        else:
+            print("No bounding boxes detected.")
+    else:
+        print("No objects detected.")
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
