@@ -1,0 +1,31 @@
+# Set the working directory to the script's location (optional)
+HOME = os.getcwd()
+print(f"Current working directory: {HOME}")
+
+# Install ultralytics library (assuming you haven't already)
+!pip install ultralytics==8.0.20 # Replace ! with pip if necessary depending on your environment
+
+# Clear output (optional)
+from IPython import display
+display.clear_output()
+
+# Import YOLO library
+import ultralytics
+ultralytics.checks()
+from ultralytics import YOLO
+
+# Define data path (modify as needed)
+data_path = r"E:\OBJECT DETECTION\Yolov8_customtraining_classroomimages\Class_room_images_Trainingdata_with_newYAML\data1.yaml" # Raw string for Windows paths
+
+# Create the model (download weights if necessary)
+model = YOLO("yolov8s")
+
+# Train the model
+model.train(
+  data=data_path, # Path to your data.yaml file
+  epochs=100, # Number of training epochs
+  imgsz=416, # Image size for training
+  plots=True, # Generate plots during training
+)
+os.chdir("E:/OBJECT DETECTION/Yolov8_customtraining_classroomimages")
+model.save('Yolov8_classroom_epoch_100')

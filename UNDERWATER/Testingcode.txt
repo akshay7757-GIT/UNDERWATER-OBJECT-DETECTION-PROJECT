@@ -1,0 +1,66 @@
+###########################Testing #######################
+import cv2
+import pandas as pd
+from ultralytics import YOLO
+import cvzone
+#model=YOLO('E:/Under_Water_Object_Detection/Dataset2 Results/best (3).pt')
+model=YOLO('E:/Under_Water_Object_Detection/RESULTS/weights/best.pt')
+
+
+
+def RGB(event, x, y, flags, param):
+    if event == cv2.EVENT_MOUSEMOVE :  
+        colorsBGR = [x, y]
+        print(colorsBGR)
+        
+
+cv2.namedWindow('RGB')
+cv2.setMouseCallback('RGB', RGB)
+
+#cap=cv2.VideoCapture(0)
+cap=cv2.VideoCapture('E:/Under_Water_Object_Detection/Videos/V3.mp4')
+
+
+my_file = open("E:/Under_Water_Object_Detection/Dataset2 Results/classes.txt", "r")
+#my_file = open("E:/Under_Water_Object_Detection/RESULTS/classes.txt", "r")
+data = my_file.read()
+class_list = data.split("\n") 
+#print(class_list)
+
+count=0
+while True:    
+    ret,frame = cap.read()
+    if not ret:
+        break
+    count += 1
+    if count % 3 != 0:
+        continue
+    frame=cv2.resize(frame,(840,864))
+   
+
+    results=model.predict(frame)
+ #   print(results)
+    a=results[0].boxes.data
+    px=pd.DataFrame(a).astype("float")
+#    print(px)
+    list=[]
+             
+    for index,row in px.iterrows():
+#        print(row)
+ 
+        x1=int(row[0])
+        y1=int(row[1])
+        x2=int(row[2])
+        y2=int(row[3])
+        d=int(row[5])
+        c=class_list[d]
+        
+        cvzone.putTextRect(frame,f'{c}',(x1,y1),1,1)
+        cv2.rectangle(frame,(x1,y1),(x2,y2),(255,0,255),2)
+        
+
+    cv2.imshow("RGB", frame)
+    if cv2.waitKey(1)&0xFF==ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
